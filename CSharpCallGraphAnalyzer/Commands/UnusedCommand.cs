@@ -22,7 +22,7 @@ public class UnusedCommand : Command
 
         var formatOption = new Option<string>(
             aliases: new[] { "--format", "-f" },
-            description: "Output format (json, console)",
+            description: "Output format (json, console, dot, graphviz)",
             getDefaultValue: () => "json");
 
         var outputOption = new Option<string?>(
@@ -62,13 +62,17 @@ public class UnusedCommand : Command
         {
             Console.Error.WriteLine($"Analyzing solution: {solutionPath}");
 
-            var options = new AnalysisOptions
+            // Create base options from CLI arguments
+            var baseOptions = new AnalysisOptions
             {
                 SolutionPath = solutionPath,
                 OutputFormat = format,
                 OutputFile = outputFile,
                 ExcludeNamespaces = excludeNamespaces
             };
+
+            // Load configuration from .csharp-analyzer.json if it exists
+            var options = ConfigurationLoader.LoadConfiguration(solutionPath, baseOptions);
 
             // Load solution
             var loader = new SolutionLoader(options);
@@ -81,17 +85,60 @@ public class UnusedCommand : Command
                 return 3;
             }
 
-            // Discover methods
-            var discovery = new MethodDiscovery(options);
-            var methods = await discovery.DiscoverMethodsAsync(compilations, cancellationToken);
+            // Try to load from cache
+            var cache = new CallGraphCache(options);
+            var cached = await cache.TryLoadCacheAsync(solution);
 
-            // Build call graph
-            var graphBuilder = new CallGraphBuilder();
-            var callGraph = await graphBuilder.BuildCallGraphAsync(methods, compilations, cancellationToken);
+            CallGraph callGraph;
+            List<string> entryPoints;
+            List<AnalysisWarning> warnings = new();
 
-            // Detect entry points
-            var entryPointDetector = new EntryPointDetector(options);
-            var entryPoints = entryPointDetector.DetectEntryPoints(callGraph);
+            if (cached != null)
+            {
+                // Use cached call graph
+                callGraph = cached.CallGraph;
+                entryPoints = cached.EntryPoints;
+                Console.Error.WriteLine($"Using cached analysis with {callGraph.Methods.Count} methods");
+            }
+            else
+            {
+                // Perform full analysis
+                Console.Error.WriteLine("Performing full analysis...");
+
+                // Discover methods
+                var discovery = new MethodDiscovery(options);
+                var methods = await discovery.DiscoverMethodsAsync(compilations, cancellationToken);
+
+                // Build call graph
+                var graphBuilder = new CallGraphBuilder();
+                callGraph = await graphBuilder.BuildCallGraphAsync(methods, compilations, cancellationToken);
+
+                // Detect entry points
+                var entryPointDetector = new EntryPointDetector(options);
+                entryPoints = entryPointDetector.DetectEntryPoints(callGraph);
+
+                // Run reflection analyzer if enabled
+                if (options.DetectReflection)
+                {
+                    var reflectionAnalyzer = new ReflectionAnalyzer();
+                    var reflectionWarnings = reflectionAnalyzer.DetectReflectionUsage(compilations, callGraph);
+                    warnings.AddRange(reflectionWarnings);
+                }
+
+                // Run DI analyzer if enabled
+                if (options.DetectDependencyInjection)
+                {
+                    var diAnalyzer = new DependencyInjectionAnalyzer();
+                    var diWarnings = diAnalyzer.DetectDependencyInjectionUsage(compilations, callGraph);
+                    warnings.AddRange(diWarnings);
+
+                    // Re-detect entry points after DI analysis
+                    entryPoints = callGraph.Methods.Values.Where(m => m.IsEntryPoint).Select(m => m.Id).ToList();
+                }
+
+                // Save to cache
+                await cache.SaveCacheAsync(solution, callGraph, entryPoints);
+            }
 
             // Find unused methods
             var deadCodeAnalyzer = new DeadCodeAnalyzer();
@@ -99,6 +146,7 @@ public class UnusedCommand : Command
 
             // Generate output
             var result = JsonOutput.CreateResult(callGraph, unusedMethods, solutionPath, includeCallGraph: false);
+            result.Warnings = warnings;
 
             if (format.Equals("json", StringComparison.OrdinalIgnoreCase))
             {
@@ -112,6 +160,27 @@ public class UnusedCommand : Command
                 else
                 {
                     Console.WriteLine(json);
+                }
+            }
+            else if (format.Equals("dot", StringComparison.OrdinalIgnoreCase) || format.Equals("graphviz", StringComparison.OrdinalIgnoreCase))
+            {
+                // GraphViz DOT format - show only unused methods grouped by class
+                var dotOptions = new DotOutputOptions
+                {
+                    IncludeLegend = true,
+                    MinConfidence = ConfidenceLevel.Low
+                };
+                var dot = DotOutput.GenerateUnusedMethodsDot(callGraph, unusedMethods, dotOptions);
+
+                if (!string.IsNullOrEmpty(outputFile))
+                {
+                    await File.WriteAllTextAsync(outputFile, dot, cancellationToken);
+                    Console.Error.WriteLine($"DOT file written to: {outputFile}");
+                    Console.Error.WriteLine($"Generate visualization with: dot -Tpng {outputFile} -o output.png");
+                }
+                else
+                {
+                    Console.WriteLine(dot);
                 }
             }
             else

@@ -1,0 +1,85 @@
+{
+  "version": "1.0",
+
+  // Attributes that mark methods as entry points (always considered "used")
+  "entryPointAttributes": [
+    // ASP.NET Core
+    "Microsoft.AspNetCore.Mvc.HttpGetAttribute",
+    "Microsoft.AspNetCore.Mvc.HttpPostAttribute",
+    "Microsoft.AspNetCore.Mvc.HttpPutAttribute",
+    "Microsoft.AspNetCore.Mvc.HttpDeleteAttribute",
+    "Microsoft.AspNetCore.Mvc.HttpPatchAttribute",
+    "Microsoft.AspNetCore.Mvc.RouteAttribute",
+
+    // Testing frameworks
+    "Xunit.FactAttribute",
+    "Xunit.TheoryAttribute",
+    "NUnit.Framework.TestAttribute",
+    "NUnit.Framework.TestCaseAttribute",
+    "Microsoft.VisualStudio.TestTools.UnitTesting.TestMethodAttribute",
+
+    // Interop
+    "System.Runtime.InteropServices.DllImportAttribute",
+
+    // Serialization
+    "System.Runtime.Serialization.DataMemberAttribute",
+    "System.Text.Json.Serialization.JsonPropertyNameAttribute",
+    "Newtonsoft.Json.JsonPropertyAttribute"
+  ],
+
+  // Namespaces to exclude from analysis (supports wildcards)
+  "excludeNamespaces": [
+    "*.Tests",
+    "*.TestHelpers",
+    "*.Migrations",
+    "*.Generated"
+  ],
+
+  // File patterns to exclude (glob-style patterns)
+  "excludeFilePatterns": [
+    "**/Migrations/**",
+    "**/obj/**",
+    "**/bin/**",
+    "**/*.Designer.cs",
+    "**/*.g.cs"
+  ],
+
+  // Namespaces that should always be considered "used" (e.g., public API)
+  "alwaysUsedNamespaces": [
+    "MyApp.PublicApi.*",
+    "MyApp.Sdk.*"
+  ],
+
+  // Minimum accessibility level to analyze
+  // Options: "Private", "Protected", "Internal", "Public"
+  "minimumAccessibility": "Private",
+
+  // Reflection pattern detection
+  "reflectionPatterns": {
+    "enabled": true,
+    "methodNamePatterns": [
+      "Get.*",
+      "Set.*",
+      "Handle.*",
+      "On.*",
+      "Execute.*"
+    ]
+  },
+
+  // Dependency injection detection
+  "dependencyInjection": {
+    "enabled": true,
+    "registrationPatterns": [
+      "services.Add*",
+      "services.TryAdd*",
+      "builder.Register*",
+      "container.Register*"
+    ]
+  },
+
+  // Caching configuration
+  "caching": {
+    "enabled": true,
+    "cacheDirectory": ".csharp-analyzer-cache"
+  }
+}
