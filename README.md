@@ -8,8 +8,13 @@ A Roslyn-based static analysis tool that analyzes C# codebases to build call gra
 - **Dead Code Detection**: Identify methods that are never called
 - **Entry Point Detection**: Smart detection of entry points (Main methods, public APIs, attributed methods, etc.)
 - **Machine-Readable Output**: JSON-first design for integration with automation tools like Claude Code
-- **Multiple Query Types**: Find callers, dependencies, or perform full analysis
+- **Multiple Query Types**: Find callers, dependencies, impact analysis, or perform full analysis
 - **Confidence Levels**: Each unused method comes with a confidence level (high/medium/low)
+- **Caching**: Fast repeated queries using cached call graphs
+- **Reflection Detection**: Warns about methods that may be called via reflection
+- **DI Pattern Recognition**: Detects dependency injection registrations (AddTransient, AddScoped, etc.)
+- **Configuration Files**: Project-specific settings via `.csharp-analyzer.json`
+- **GraphViz Visualization**: Generate visual call graphs with DOT format
 
 ## Installation
 
@@ -277,6 +282,96 @@ Create a `.csharp-analyzer.json` file in your solution root to configure analysi
 
 See `.csharp-analyzer.json.example` in the repository for a complete example with comments.
 
+## Advanced Features
+
+### Caching
+
+The analyzer automatically caches call graph analysis results for performance:
+
+- **First run**: Full analysis (may take 10-30 seconds for large solutions)
+- **Subsequent runs**: Instant results from cache (< 1 second)
+- **Automatic invalidation**: Cache is invalidated when any C# file changes
+- **Cache location**: `.csharp-analyzer-cache/` directory (configurable)
+
+The cache stores:
+- Complete call graph (methods and relationships)
+- Detected entry points
+- Cache key based on file modification timestamps
+
+**Benefits**:
+- Fast repeated queries (`callers`, `dependencies`, `impact`)
+- Great for CI/CD pipelines
+- Perfect for Claude Code integration (multiple queries on same solution)
+
+**Disable caching**:
+```json
+{
+  "caching": {
+    "enabled": false
+  }
+}
+```
+
+### Reflection Detection
+
+Automatically detects reflection usage that may call methods dynamically:
+
+**Detected patterns**:
+- `Type.GetMethod()` / `Type.GetMethods()`
+- `Type.GetProperty()` / `Type.GetProperties()`
+- `MethodInfo.Invoke()`
+- `PropertyInfo.GetValue()` / `PropertyInfo.SetValue()`
+- `Activator.CreateInstance()`
+- `Assembly.CreateInstance()`
+
+**Behavior**:
+- Generates warnings in output with file locations
+- Reduces confidence for methods found in string literals
+- Example: `Type.GetMethod("Calculate")` → marks `Calculate` methods as medium confidence
+
+**Configuration**:
+```json
+{
+  "reflectionPatterns": {
+    "enabled": true,
+    "methodNamePatterns": ["Get.*", "Set.*", "Handle.*"]
+  }
+}
+```
+
+### Dependency Injection Recognition
+
+Detects DI container registrations and marks registered types as used:
+
+**Detected patterns**:
+- ASP.NET Core: `services.AddTransient<T>()`, `services.AddScoped<T>()`, `services.AddSingleton<T>()`
+- Autofac: `builder.RegisterType<T>()`
+- Other containers: `container.Register<T>()`
+
+**Behavior**:
+- Automatically marks all methods in registered types as entry points
+- Prevents false positives for DI-registered services
+- Generates informational warnings showing what was registered
+
+**Configuration**:
+```json
+{
+  "dependencyInjection": {
+    "enabled": true,
+    "registrationPatterns": [
+      "services.Add*",
+      "builder.Register*",
+      "container.Register*"
+    ]
+  }
+}
+```
+
+**Example**:
+```csharp
+services.AddTransient<PricingService>();  // All PricingService methods marked as entry points
+```
+
 ## Confidence Levels
 
 The tool assigns confidence levels to each unused method detection:
@@ -367,10 +462,10 @@ MIT License
 - ✅ Configuration file support
 - ✅ Impact analysis command
 
-### Phase 2 - Production Ready (In Progress)
-- ⏳ Caching for performance
-- ⏳ Reflection warning detection
-- ⏳ DI pattern recognition
+### Phase 2 - Production Ready ✅ COMPLETE
+- ✅ Caching for performance (file-based cache with automatic invalidation)
+- ✅ Reflection warning detection (Type.GetMethod, MethodInfo.Invoke, Activator.CreateInstance, etc.)
+- ✅ DI pattern recognition (AddTransient, AddScoped, AddSingleton, RegisterType, etc.)
 
 ### Phase 3 - Advanced Features
 - 📋 Generic method tracking
