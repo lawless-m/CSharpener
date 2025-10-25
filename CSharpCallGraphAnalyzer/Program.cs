@@ -18,6 +18,7 @@ class Program
         rootCommand.AddCommand(new CallersCommand());
         rootCommand.AddCommand(new DependenciesCommand());
         rootCommand.AddCommand(new ImpactCommand());
+        rootCommand.AddCommand(DocumentCommand.Create());
 
         // Parse and execute
         return await rootCommand.InvokeAsync(args);

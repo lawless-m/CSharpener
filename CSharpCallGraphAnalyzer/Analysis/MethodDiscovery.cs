@@ -139,10 +139,13 @@ public class MethodDiscovery
         // Get location information
         var location = methodSymbol.Locations.FirstOrDefault();
         var lineNumber = 0;
+        var linesOfCode = 0;
         if (location?.IsInSource == true)
         {
             var lineSpan = location.GetLineSpan();
             lineNumber = lineSpan.StartLinePosition.Line + 1;
+            // Calculate lines of code (end line - start line)
+            linesOfCode = lineSpan.EndLinePosition.Line - lineSpan.StartLinePosition.Line + 1;
         }
 
         // Get attributes
@@ -153,6 +156,66 @@ public class MethodDiscovery
 
         // Generate unique ID
         var id = GenerateMethodId(methodSymbol);
+
+        // Extract parameters
+        var parameters = ExtractParameters(methodSymbol);
+
+        // Extract return type
+        var returnType = methodSymbol.ReturnType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+        var returnTypeDisplayName = methodSymbol.ReturnType.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat);
+
+        // Check if async
+        var isAsync = methodSymbol.IsAsync ||
+                      returnType.Contains("System.Threading.Tasks.Task") ||
+                      returnType.Contains("System.Threading.Tasks.ValueTask");
+
+        // Extract generic parameters
+        var genericParameters = methodSymbol.TypeParameters
+            .Select(tp => tp.Name)
+            .ToList();
+
+        var genericConstraints = methodSymbol.TypeParameters
+            .Where(tp => tp.HasConstructorConstraint || tp.HasReferenceTypeConstraint ||
+                        tp.HasValueTypeConstraint || tp.ConstraintTypes.Length > 0)
+            .Select(tp => FormatGenericConstraint(tp))
+            .ToList();
+
+        // Extract XML documentation
+        var xmlDoc = methodSymbol.GetDocumentationCommentXml();
+        string? existingDoc = string.IsNullOrWhiteSpace(xmlDoc) ? null : xmlDoc;
+
+        // Extract class context
+        var containingType = methodSymbol.ContainingType;
+        var classInterfaces = containingType?.AllInterfaces
+            .Select(i => i.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat))
+            .ToList() ?? new List<string>();
+
+        var classBaseType = containingType?.BaseType?.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat);
+        // Don't include "object" as base type - it's implicit
+        if (classBaseType == "object")
+        {
+            classBaseType = null;
+        }
+
+        // Check if implements interface
+        var implementsInterface = false;
+        string? implementedInterfaceMethod = null;
+        if (containingType != null)
+        {
+            foreach (var iface in containingType.AllInterfaces)
+            {
+                var interfaceMethod = iface.GetMembers()
+                    .OfType<IMethodSymbol>()
+                    .FirstOrDefault(m => containingType.FindImplementationForInterfaceMember(m)?.Equals(methodSymbol, SymbolEqualityComparer.Default) == true);
+
+                if (interfaceMethod != null)
+                {
+                    implementsInterface = true;
+                    implementedInterfaceMethod = $"{iface.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat)}.{interfaceMethod.Name}";
+                    break;
+                }
+            }
+        }
 
         var methodInfo = new Models.MethodInfo
         {
@@ -170,10 +233,104 @@ public class MethodDiscovery
             LineNumber = lineNumber,
             Signature = GetMethodSignature(methodSymbol),
             Symbol = methodSymbol,
-            Attributes = attributes
+            Attributes = attributes,
+
+            // Documentation support properties
+            Parameters = parameters,
+            ReturnType = returnType,
+            ReturnTypeDisplayName = returnTypeDisplayName,
+            IsAsync = isAsync,
+            GenericParameters = genericParameters,
+            GenericConstraints = genericConstraints,
+            ExistingDocumentation = existingDoc,
+            ClassInterfaces = classInterfaces,
+            ClassBaseType = classBaseType,
+            ClassIsAbstract = containingType?.IsAbstract ?? false,
+            ClassIsSealed = containingType?.IsSealed ?? false,
+            ClassIsStatic = containingType?.IsStatic ?? false,
+            LinesOfCode = linesOfCode,
+            ImplementsInterface = implementsInterface,
+            ImplementedInterfaceMethod = implementedInterfaceMethod
         };
 
         return methodInfo;
+    }
+
+    /// <summary>
+    /// Extract detailed parameter information
+    /// </summary>
+    private List<Models.ParameterInfo> ExtractParameters(IMethodSymbol methodSymbol)
+    {
+        var parameters = new List<Models.ParameterInfo>();
+
+        foreach (var param in methodSymbol.Parameters)
+        {
+            var paramInfo = new Models.ParameterInfo
+            {
+                Name = param.Name,
+                Type = param.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                TypeDisplayName = param.Type.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat),
+                HasDefaultValue = param.HasExplicitDefaultValue,
+                DefaultValue = param.HasExplicitDefaultValue ? FormatDefaultValue(param.ExplicitDefaultValue) : null,
+                IsRef = param.RefKind == RefKind.Ref,
+                IsOut = param.RefKind == RefKind.Out,
+                IsIn = param.RefKind == RefKind.In,
+                IsParams = param.IsParams,
+                IsOptional = param.IsOptional,
+                Attributes = param.GetAttributes()
+                    .Select(attr => attr.AttributeClass?.ToDisplayString() ?? string.Empty)
+                    .Where(name => !string.IsNullOrEmpty(name))
+                    .ToList()
+            };
+
+            parameters.Add(paramInfo);
+        }
+
+        return parameters;
+    }
+
+    /// <summary>
+    /// Format a default value for display
+    /// </summary>
+    private string FormatDefaultValue(object? value)
+    {
+        if (value == null)
+            return "null";
+
+        if (value is string str)
+            return $"\"{str}\"";
+
+        if (value is bool b)
+            return b ? "true" : "false";
+
+        return value.ToString() ?? "null";
+    }
+
+    /// <summary>
+    /// Format generic constraint for display
+    /// </summary>
+    private string FormatGenericConstraint(ITypeParameterSymbol typeParam)
+    {
+        var constraints = new List<string>();
+
+        if (typeParam.HasReferenceTypeConstraint)
+            constraints.Add("class");
+
+        if (typeParam.HasValueTypeConstraint)
+            constraints.Add("struct");
+
+        if (typeParam.HasUnmanagedTypeConstraint)
+            constraints.Add("unmanaged");
+
+        foreach (var constraintType in typeParam.ConstraintTypes)
+        {
+            constraints.Add(constraintType.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat));
+        }
+
+        if (typeParam.HasConstructorConstraint)
+            constraints.Add("new()");
+
+        return $"where {typeParam.Name} : {string.Join(", ", constraints)}";
     }
 
     /// <summary>

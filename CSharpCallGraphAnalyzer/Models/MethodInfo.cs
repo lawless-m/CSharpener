@@ -101,4 +101,81 @@ public class MethodInfo
     /// Reason for the confidence level or unused status
     /// </summary>
     public string Reason { get; set; } = string.Empty;
+
+    // === Documentation Support Properties ===
+
+    /// <summary>
+    /// Detailed parameter information for documentation generation
+    /// </summary>
+    public List<ParameterInfo> Parameters { get; set; } = new();
+
+    /// <summary>
+    /// Return type full name (e.g., "System.Threading.Tasks.Task<string>")
+    /// </summary>
+    public string ReturnType { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Return type display name (e.g., "Task<string>")
+    /// </summary>
+    public string ReturnTypeDisplayName { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Whether this is an async method
+    /// </summary>
+    public bool IsAsync { get; set; }
+
+    /// <summary>
+    /// Generic type parameters (e.g., ["T", "TResult"])
+    /// </summary>
+    public List<string> GenericParameters { get; set; } = new();
+
+    /// <summary>
+    /// Generic type parameter constraints (e.g., "where T : class, IDisposable")
+    /// </summary>
+    public List<string> GenericConstraints { get; set; } = new();
+
+    /// <summary>
+    /// Existing XML documentation comment (if any)
+    /// </summary>
+    public string? ExistingDocumentation { get; set; }
+
+    /// <summary>
+    /// Interfaces implemented by the containing class
+    /// </summary>
+    public List<string> ClassInterfaces { get; set; } = new();
+
+    /// <summary>
+    /// Base class of the containing class
+    /// </summary>
+    public string? ClassBaseType { get; set; }
+
+    /// <summary>
+    /// Whether the containing class is abstract
+    /// </summary>
+    public bool ClassIsAbstract { get; set; }
+
+    /// <summary>
+    /// Whether the containing class is sealed
+    /// </summary>
+    public bool ClassIsSealed { get; set; }
+
+    /// <summary>
+    /// Whether the containing class is static
+    /// </summary>
+    public bool ClassIsStatic { get; set; }
+
+    /// <summary>
+    /// Number of lines of code in the method body (approximate)
+    /// </summary>
+    public int LinesOfCode { get; set; }
+
+    /// <summary>
+    /// Whether this method implements an interface method
+    /// </summary>
+    public bool ImplementsInterface { get; set; }
+
+    /// <summary>
+    /// Interface method this implements (if applicable)
+    /// </summary>
+    public string? ImplementedInterfaceMethod { get; set; }
 }

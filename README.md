@@ -36,13 +36,14 @@ The compiled executable will be at: `CSharpCallGraphAnalyzer/bin/Release/net8.0/
 
 ### Commands
 
-The tool provides five main commands:
+The tool provides six main commands:
 
 1. **analyze** - Full analysis with call graph
 2. **unused** - Quick scan for unused methods only
 3. **callers** - Find all callers of a specific method
 4. **dependencies** - Find all methods called by a specific method
 5. **impact** - Analyze impact of removing a method (safety check before deletion)
+6. **document** - Generate documentation metadata for Claude Code to use when generating docs
 
 ### Examples
 
@@ -82,6 +83,50 @@ csharp-analyzer impact --solution MySolution.sln --method "MyMethod" --max-depth
 # Generate visual impact graph
 csharp-analyzer impact --solution MySolution.sln --method "MyMethod" --format dot | dot -Tpng -o impact.png
 ```
+
+#### Documentation Metadata Generation (For Claude Code)
+
+Generate comprehensive metadata to help Claude Code create intelligent documentation:
+
+```bash
+# Generate documentation metadata for all methods
+csharp-analyzer document --solution MySolution.sln --format json --output docs-metadata.json
+
+# Get metadata for specific class
+csharp-analyzer document --solution MySolution.sln --filter "MyApp.Business.OrderService"
+
+# Get metadata for specific method
+csharp-analyzer document --solution MySolution.sln --method "ProcessOrder"
+
+# Exclude unused methods from output
+csharp-analyzer document --solution MySolution.sln
+
+# Include unused methods (for comprehensive documentation)
+csharp-analyzer document --solution MySolution.sln --include-unused
+
+# Human-readable console output
+csharp-analyzer document --solution MySolution.sln --format console --filter "MyApp.Business.*"
+```
+
+The `document` command provides rich metadata including:
+- **Parameters**: Name, type, default values, ref/out/in modifiers
+- **Return types**: Full and display names
+- **Generic constraints**: Type parameters and their constraints
+- **Existing XML docs**: Avoid overwriting good documentation
+- **Call graph context**: Callers, callees, entry points
+- **Class context**: Interfaces, base classes, modifiers
+- **Interface implementations**: Which interface method this implements
+- **Async detection**: Whether method is async
+- **Lines of code**: Method size for prioritization
+
+**Typical Claude Code Workflow:**
+1. User: "Document this project"
+2. Claude Code runs: `csharp-analyzer document --solution MySolution.sln --format json`
+3. Claude Code parses JSON and generates XML doc comments based on:
+   - What the method does (inferred from call graph)
+   - Who calls it (public API vs internal helper)
+   - What it depends on (callees)
+   - Whether it already has docs (don't overwrite)
 
 #### Exclude Namespaces
 
@@ -209,6 +254,30 @@ csharp-analyzer impact --solution MySolution.sln --method "MyApp.Utils.OldHelper
 5. **Claude Code removes** the method if safe (high confidence, no callers)
 
 6. **Claude Code confirms** by re-running analysis
+
+### Documentation Generation Workflow
+
+1. **User asks**: "Document this project"
+
+2. **Claude Code runs**:
+```bash
+csharp-analyzer document --solution MySolution.sln --format json > docs-metadata.json
+```
+
+3. **Claude Code analyzes** the JSON to understand:
+   - Method signatures, parameters, and return types
+   - Call relationships (who calls what)
+   - Which methods are entry points (public API)
+   - Which methods already have documentation
+   - Class context (interfaces, base classes)
+
+4. **Claude Code generates** XML doc comments:
+   - Uses call graph to infer purpose ("Called by OrderController to process orders")
+   - Identifies public API vs internal helpers based on accessibility and callers
+   - Skips methods with existing documentation unless user requests override
+   - Prioritizes public entry points over private helpers
+
+5. **Claude Code writes** documentation back to source files
 
 ### JSON Schema
 
