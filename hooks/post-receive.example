@@ -1,0 +1,113 @@
+#!/bin/bash
+#
+# Server-side git post-receive hook for Gogs/Gitea
+# Automatically generates LXR-style HTML documentation when code is pushed
+#
+# Installation on Gogs server:
+#   1. SSH to your Gogs server
+#   2. Navigate to: /home/git/gogs-repositories/{user}/{repo}.git/hooks/
+#   3. Create/edit post-receive file (this script)
+#   4. Make executable: chmod +x post-receive
+#   5. Ensure .NET SDK 8 is installed on server
+#   6. Configure paths below
+#
+# This hook runs AFTER a successful push to the server
+
+# Configuration - ADJUST THESE FOR YOUR SERVER
+PROJECT_NAME="CSharpener"
+SOLUTION_FILE="CSharpCallGraphAnalyzer.sln"
+WORK_DIR="/tmp/csharp-analyzer-builds/$PROJECT_NAME"
+HTML_OUTPUT_DIR="/var/www/code-docs/$PROJECT_NAME"
+WEB_URL="http://your-server.com/code-docs/$PROJECT_NAME"
+
+# Gogs/Gitea repository path (usually passed via GIT_DIR)
+REPO_DIR="${GIT_DIR:-.}"
+
+# Analyzer settings
+DOTNET_CLI="dotnet"
+BUILD_CONFIG="Release"
+
+# Colors for output
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+NC='\033[0m' # No Color
+
+echo -e "${YELLOW}[Post-Receive Hook] Starting documentation generation...${NC}"
+
+# Read the ref being pushed (from stdin)
+while read oldrev newrev refname; do
+    # Only build for main/master branch
+    if [[ "$refname" =~ refs/heads/(main|master) ]]; then
+        BRANCH=$(echo "$refname" | sed 's|refs/heads/||')
+        echo "Processing push to $BRANCH branch..."
+
+        # Create work directory
+        mkdir -p "$WORK_DIR"
+        cd "$WORK_DIR" || exit 1
+
+        # Clone/update the repository
+        if [ -d ".git" ]; then
+            echo "Updating existing checkout..."
+            git fetch origin
+            git reset --hard "$newrev"
+        else
+            echo "Fresh clone..."
+            git clone "$REPO_DIR" .
+            git checkout "$newrev"
+        fi
+
+        # Build the analyzer
+        echo "Building analyzer..."
+        $DOTNET_CLI build -c "$BUILD_CONFIG" "$SOLUTION_FILE"
+
+        if [ $? -ne 0 ]; then
+            echo -e "${RED}✗ Build failed, skipping documentation generation${NC}"
+            exit 0  # Don't fail the push
+        fi
+
+        # Find the built analyzer
+        ANALYZER_PATH=$(find . -path "*/bin/$BUILD_CONFIG/*/csharp-analyzer" -o -path "*/bin/$BUILD_CONFIG/*/csharp-analyzer.exe" | head -n 1)
+
+        if [ -z "$ANALYZER_PATH" ]; then
+            echo -e "${RED}✗ Analyzer executable not found${NC}"
+            exit 0
+        fi
+
+        echo "Found analyzer at: $ANALYZER_PATH"
+
+        # Create output directory
+        mkdir -p "$HTML_OUTPUT_DIR"
+
+        # Generate HTML documentation
+        echo "Generating HTML documentation..."
+        $DOTNET_CLI "$ANALYZER_PATH" analyze \
+            --solution "$SOLUTION_FILE" \
+            --format html \
+            --output "$HTML_OUTPUT_DIR"
+
+        if [ $? -eq 0 ] || [ $? -eq 1 ]; then
+            # Set permissions for web server
+            chmod -R 755 "$HTML_OUTPUT_DIR"
+
+            echo -e "${GREEN}✓ Documentation generated successfully!${NC}"
+            echo -e "  📂 Location: $HTML_OUTPUT_DIR"
+            echo -e "  🌐 View online: $WEB_URL/index.html"
+
+            # Optional: Send notification
+            # curl -X POST "https://your-chat-webhook.com" \
+            #     -H "Content-Type: application/json" \
+            #     -d "{\"text\": \"📚 Code documentation updated for $PROJECT_NAME\"}"
+
+        else
+            echo -e "${RED}✗ Documentation generation failed${NC}"
+        fi
+
+        # Cleanup old builds (keep last 3)
+        cd /tmp/csharp-analyzer-builds || exit 0
+        ls -t | tail -n +4 | xargs -r rm -rf
+
+    fi
+done
+
+exit 0  # Always exit 0 so push isn't affected
