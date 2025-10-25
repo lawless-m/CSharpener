@@ -31,12 +31,13 @@ The compiled executable will be at: `CSharpCallGraphAnalyzer/bin/Release/net8.0/
 
 ### Commands
 
-The tool provides four main commands:
+The tool provides five main commands:
 
 1. **analyze** - Full analysis with call graph
 2. **unused** - Quick scan for unused methods only
 3. **callers** - Find all callers of a specific method
 4. **dependencies** - Find all methods called by a specific method
+5. **impact** - Analyze impact of removing a method (safety check before deletion)
 
 ### Examples
 
@@ -62,6 +63,19 @@ csharp-analyzer callers --solution MySolution.sln --method "MyNamespace.MyClass.
 
 ```bash
 csharp-analyzer dependencies --solution MySolution.sln --method "MyNamespace.MyClass.MyMethod"
+```
+
+#### Impact Analysis (Safety Check Before Deletion)
+
+```bash
+# Check what would break if you delete this method
+csharp-analyzer impact --solution MySolution.sln --method "MyNamespace.MyClass.MyMethod"
+
+# With custom depth for transitive analysis
+csharp-analyzer impact --solution MySolution.sln --method "MyMethod" --max-depth 10
+
+# Generate visual impact graph
+csharp-analyzer impact --solution MySolution.sln --method "MyMethod" --format dot | dot -Tpng -o impact.png
 ```
 
 #### Exclude Namespaces
@@ -204,6 +218,13 @@ The JSON output follows a versioned schema (currently v1.0). Key fields:
 
 ## Configuration
 
+The analyzer automatically looks for a `.csharp-analyzer.json` configuration file in:
+1. The solution/project directory
+2. The current working directory
+3. Parent directories (searches up the tree)
+
+Configuration settings are merged with command-line arguments (CLI args take precedence).
+
 Create a `.csharp-analyzer.json` file in your solution root to configure analysis:
 
 ```json
@@ -227,9 +248,34 @@ Create a `.csharp-analyzer.json` file in your solution root to configure analysi
   ],
   "alwaysUsedNamespaces": [
     "MyApp.PublicApi.*"
-  ]
+  ],
+  "minimumAccessibility": "Private",
+  "reflectionPatterns": {
+    "enabled": true,
+    "methodNamePatterns": ["Get.*", "Set.*", "Handle.*"]
+  },
+  "dependencyInjection": {
+    "enabled": true,
+    "registrationPatterns": ["services.Add*", "builder.Register*"]
+  },
+  "caching": {
+    "enabled": true,
+    "cacheDirectory": ".csharp-analyzer-cache"
+  }
 }
 ```
+
+**Configuration Options:**
+- `entryPointAttributes` - Attributes that mark methods as entry points (always used)
+- `excludeNamespaces` - Namespace patterns to exclude (supports wildcards)
+- `excludeFilePatterns` - File patterns to exclude (glob-style)
+- `alwaysUsedNamespaces` - Namespaces to always consider as used (for public APIs)
+- `minimumAccessibility` - Minimum level to analyze ("Private", "Protected", "Internal", "Public")
+- `reflectionPatterns` - Configure reflection detection
+- `dependencyInjection` - Configure DI pattern recognition
+- `caching` - Enable/configure analysis caching
+
+See `.csharp-analyzer.json.example` in the repository for a complete example with comments.
 
 ## Confidence Levels
 
@@ -311,20 +357,20 @@ MIT License
 
 ## Roadmap
 
-### Phase 1 (Current) - MVP
+### Phase 1 - MVP ✅ COMPLETE
 - ✅ Basic call graph analysis
 - ✅ Dead code detection
 - ✅ JSON output
 - ✅ GraphViz DOT visualization
 - ✅ Entry point detection
-- ✅ CLI commands (analyze, unused, callers, dependencies)
+- ✅ CLI commands (analyze, unused, callers, dependencies, impact)
+- ✅ Configuration file support
+- ✅ Impact analysis command
 
-### Phase 2 - Production Ready
+### Phase 2 - Production Ready (In Progress)
 - ⏳ Caching for performance
 - ⏳ Reflection warning detection
 - ⏳ DI pattern recognition
-- ⏳ Configuration file support
-- ⏳ Impact analysis command
 
 ### Phase 3 - Advanced Features
 - 📋 Generic method tracking

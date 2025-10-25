@@ -58,11 +58,15 @@ public class DependenciesCommand : Command
             Console.Error.WriteLine($"Analyzing solution: {solutionPath}");
             Console.Error.WriteLine($"Finding dependencies of: {methodName}");
 
-            var options = new AnalysisOptions
+            // Create base options from CLI arguments
+            var baseOptions = new AnalysisOptions
             {
                 SolutionPath = solutionPath,
                 OutputFormat = format
             };
+
+            // Load configuration from .csharp-analyzer.json if it exists
+            var options = ConfigurationLoader.LoadConfiguration(solutionPath, baseOptions);
 
             // Load solution
             var loader = new SolutionLoader(options);

@@ -70,7 +70,8 @@ public class AnalyzeCommand : Command
         {
             Console.Error.WriteLine($"Analyzing solution: {solutionPath}");
 
-            var options = new AnalysisOptions
+            // Create base options from CLI arguments
+            var baseOptions = new AnalysisOptions
             {
                 SolutionPath = solutionPath,
                 OutputFormat = format,
@@ -78,6 +79,9 @@ public class AnalyzeCommand : Command
                 IncludeCallGraph = includeCallGraph,
                 ExcludeNamespaces = excludeNamespaces
             };
+
+            // Load configuration from .csharp-analyzer.json if it exists
+            var options = ConfigurationLoader.LoadConfiguration(solutionPath, baseOptions);
 
             // Load solution
             var loader = new SolutionLoader(options);
