@@ -116,6 +116,49 @@ Output example:
 csharp-analyzer unused --solution MySolution.sln --format console
 ```
 
+#### GraphViz DOT (Visualization)
+
+Generate visual call graphs using GraphViz DOT format:
+
+```bash
+# Full call graph
+csharp-analyzer analyze --solution MySolution.sln --format dot --output callgraph.dot
+dot -Tpng callgraph.dot -o callgraph.png
+
+# Unused methods visualization (grouped by class)
+csharp-analyzer unused --solution MySolution.sln --format dot --output unused.dot
+dot -Tpng unused.dot -o unused.png
+
+# Visualize callers of a specific method
+csharp-analyzer callers --solution MySolution.sln --method "MyClass.MyMethod" --format dot | dot -Tpng -o callers.png
+
+# Visualize dependencies of a specific method
+csharp-analyzer dependencies --solution MySolution.sln --method "MyClass.MyMethod" --format dot | dot -Tsvg -o dependencies.svg
+```
+
+**Features:**
+- Color-coded nodes:
+  - **Light Blue**: Entry points (Main, attributed methods)
+  - **Light Green**: Used methods
+  - **Red**: Unused methods (high confidence)
+  - **Orange**: Unused methods (medium confidence)
+  - **Yellow**: Unused methods (low confidence)
+- Automatic legend included
+- Methods grouped by class in unused view
+- Supports PNG, SVG, PDF output via GraphViz
+
+**Install GraphViz:**
+```bash
+# Ubuntu/Debian
+sudo apt-get install graphviz
+
+# macOS
+brew install graphviz
+
+# Windows
+choco install graphviz
+```
+
 ### Exit Codes
 
 - **0**: Success (no unused methods found)
@@ -254,7 +297,8 @@ CSharpCallGraphAnalyzer/
 │   ├── AnalysisResult.cs              # Analysis results
 │   └── ConfidenceLevel.cs             # Confidence scoring
 ├── Output/
-│   └── JsonOutput.cs                  # Structured JSON output
+│   ├── JsonOutput.cs                  # Structured JSON output
+│   └── DotOutput.cs                   # GraphViz DOT visualization
 ├── Configuration/
 │   └── AnalysisOptions.cs             # Configuration options
 └── Utilities/
@@ -271,6 +315,7 @@ MIT License
 - ✅ Basic call graph analysis
 - ✅ Dead code detection
 - ✅ JSON output
+- ✅ GraphViz DOT visualization
 - ✅ Entry point detection
 - ✅ CLI commands (analyze, unused, callers, dependencies)
 
@@ -294,3 +339,4 @@ Built with:
 - [Roslyn](https://github.com/dotnet/roslyn) - .NET Compiler Platform
 - [System.CommandLine](https://github.com/dotnet/command-line-api) - Command-line parsing
 - [System.Text.Json](https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/) - JSON serialization
+- [GraphViz](https://graphviz.org/) - Graph visualization (optional, for DOT format rendering)

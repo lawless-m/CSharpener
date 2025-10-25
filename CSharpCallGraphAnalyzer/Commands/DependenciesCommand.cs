@@ -29,7 +29,7 @@ public class DependenciesCommand : Command
 
         var formatOption = new Option<string>(
             aliases: new[] { "--format", "-f" },
-            description: "Output format (json, console)",
+            description: "Output format (json, console, dot, graphviz)",
             getDefaultValue: () => "json");
 
         AddOption(solutionOption);
@@ -118,6 +118,12 @@ public class DependenciesCommand : Command
             {
                 var json = JsonOutput.CreateDependenciesResult(callGraph, targetMethod.Id, targetMethod.FullName);
                 Console.WriteLine(json);
+            }
+            else if (format.Equals("dot", StringComparison.OrdinalIgnoreCase) || format.Equals("graphviz", StringComparison.OrdinalIgnoreCase))
+            {
+                var dot = DotOutput.GenerateDependenciesDot(callGraph, targetMethod.Id, maxDepth: 3);
+                Console.WriteLine(dot);
+                Console.Error.WriteLine($"\nGenerate visualization with: dot -Tpng -o dependencies.png");
             }
             else
             {

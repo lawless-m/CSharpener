@@ -29,7 +29,7 @@ public class CallersCommand : Command
 
         var formatOption = new Option<string>(
             aliases: new[] { "--format", "-f" },
-            description: "Output format (json, console)",
+            description: "Output format (json, console, dot, graphviz)",
             getDefaultValue: () => "json");
 
         AddOption(solutionOption);
@@ -118,6 +118,12 @@ public class CallersCommand : Command
             {
                 var json = JsonOutput.CreateCallersResult(callGraph, targetMethod.Id, targetMethod.FullName);
                 Console.WriteLine(json);
+            }
+            else if (format.Equals("dot", StringComparison.OrdinalIgnoreCase) || format.Equals("graphviz", StringComparison.OrdinalIgnoreCase))
+            {
+                var dot = DotOutput.GenerateCallersDot(callGraph, targetMethod.Id, maxDepth: 3);
+                Console.WriteLine(dot);
+                Console.Error.WriteLine($"\nGenerate visualization with: dot -Tpng -o callers.png");
             }
             else
             {

@@ -22,7 +22,7 @@ public class UnusedCommand : Command
 
         var formatOption = new Option<string>(
             aliases: new[] { "--format", "-f" },
-            description: "Output format (json, console)",
+            description: "Output format (json, console, dot, graphviz)",
             getDefaultValue: () => "json");
 
         var outputOption = new Option<string?>(
@@ -112,6 +112,27 @@ public class UnusedCommand : Command
                 else
                 {
                     Console.WriteLine(json);
+                }
+            }
+            else if (format.Equals("dot", StringComparison.OrdinalIgnoreCase) || format.Equals("graphviz", StringComparison.OrdinalIgnoreCase))
+            {
+                // GraphViz DOT format - show only unused methods grouped by class
+                var dotOptions = new DotOutputOptions
+                {
+                    IncludeLegend = true,
+                    MinConfidence = ConfidenceLevel.Low
+                };
+                var dot = DotOutput.GenerateUnusedMethodsDot(callGraph, unusedMethods, dotOptions);
+
+                if (!string.IsNullOrEmpty(outputFile))
+                {
+                    await File.WriteAllTextAsync(outputFile, dot, cancellationToken);
+                    Console.Error.WriteLine($"DOT file written to: {outputFile}");
+                    Console.Error.WriteLine($"Generate visualization with: dot -Tpng {outputFile} -o output.png");
+                }
+                else
+                {
+                    Console.WriteLine(dot);
                 }
             }
             else
