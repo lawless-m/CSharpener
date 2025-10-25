@@ -223,6 +223,81 @@ brew install graphviz
 choco install graphviz
 ```
 
+#### LXR-Style HTML Cross-Reference (Interactive Code Browser)
+
+Generate browsable HTML documentation with cross-referenced method calls, similar to the classic LXR (Linux Cross Reference) tool:
+
+```bash
+# Generate HTML documentation
+csharp-analyzer analyze --solution MySolution.sln --format html --output html-docs
+
+# Open in browser
+open html-docs/index.html
+# Or: xdg-open html-docs/index.html (Linux)
+# Or: start html-docs/index.html (Windows)
+```
+
+**Features:**
+- **LXR-style navigation**: Click any method call to jump to its definition
+- **Caller/Callee tracking**: See who calls each method and what it calls
+- **Color-coded methods**: Visual distinction between used/unused, public/private
+- **Search functionality**: Client-side search for methods, classes, namespaces
+- **Responsive design**: Works on desktop and mobile
+- **Static HTML**: No server required, just open in browser
+- **Navigation tree**: Browse by namespace → class → method
+- **Method details**: Parameters, return types, generics, attributes
+- **Usage indicators**: Entry points, async methods, interface implementations
+- **Statistics dashboard**: Overview of codebase health
+
+**Perfect for:**
+- Code reviews and exploration
+- Onboarding new developers
+- Documenting internal APIs
+- Understanding legacy codebases
+- Self-hosted documentation (no GitHub needed)
+
+**Automatic Generation with Git Hooks:**
+
+The tool includes example git hooks for automatic documentation generation:
+
+```bash
+# Client-side: Generate docs after every commit
+cp hooks/post-commit.example .git/hooks/post-commit
+chmod +x .git/hooks/post-commit
+
+# Client-side: Generate docs before push
+cp hooks/pre-push.example .git/hooks/pre-push
+chmod +x .git/hooks/pre-push
+
+# Server-side (Gogs/Gitea): Auto-generate and publish on push
+# See hooks/README.md for Gogs server installation
+```
+
+**Server-Side Setup for Gogs/Gitea:**
+
+The post-receive hook can automatically build and publish docs when code is pushed:
+
+1. Install on Gogs server: `/home/git/gogs-repositories/{user}/{repo}.git/hooks/post-receive`
+2. Configure paths in the hook
+3. Push code → Server builds analyzer → Generates HTML → Publishes to web server
+4. Team browses docs at: `http://your-server/code-docs/project-name/`
+
+See `hooks/README.md` for detailed setup instructions including nginx/apache configuration.
+
+**Example Output Structure:**
+```
+html-docs/
+├── index.html           # Main navigation page
+├── files/
+│   ├── Program_A1B2C3D4.html
+│   ├── OrderService_E5F6G7H8.html
+│   └── ...
+├── css/
+│   └── style.css
+└── js/
+    └── search.js
+```
+
 ### Exit Codes
 
 - **0**: Success (no unused methods found)
@@ -536,12 +611,14 @@ MIT License
 - ✅ Reflection warning detection (Type.GetMethod, MethodInfo.Invoke, Activator.CreateInstance, etc.)
 - ✅ DI pattern recognition (AddTransient, AddScoped, AddSingleton, RegisterType, etc.)
 
-### Phase 3 - Advanced Features
+### Phase 3 - Documentation & Advanced Features ✅ PARTIAL COMPLETE
+- ✅ Documentation metadata extraction (document command)
+- ✅ LXR-style HTML cross-reference generation
+- ✅ Git hooks for automatic documentation (client-side and server-side)
 - 📋 Generic method tracking
 - 📋 Lambda and delegate analysis
 - 📋 Event handler detection
-- 📋 Incremental analysis
-- 📋 HTML report generation
+- 📋 Incremental analysis (partial support via caching)
 
 ## Credits
 

@@ -22,7 +22,7 @@ public class AnalyzeCommand : Command
 
         var formatOption = new Option<string>(
             aliases: new[] { "--format", "-f" },
-            description: "Output format (json, console, dot, graphviz)",
+            description: "Output format (json, console, dot, graphviz, html)",
             getDefaultValue: () => "json");
 
         var outputOption = new Option<string?>(
@@ -191,6 +191,26 @@ public class AnalyzeCommand : Command
                 {
                     Console.WriteLine(dot);
                 }
+            }
+            else if (format.Equals("html", StringComparison.OrdinalIgnoreCase))
+            {
+                // LXR-style cross-referenced HTML
+                var htmlOutputDir = outputFile ?? "html-docs";
+
+                // Ensure output is a directory
+                if (!string.IsNullOrEmpty(outputFile) && Path.HasExtension(outputFile))
+                {
+                    // If user specified a file path, use its directory
+                    htmlOutputDir = Path.GetDirectoryName(outputFile) ?? "html-docs";
+                }
+
+                var solutionName = Path.GetFileNameWithoutExtension(solutionPath);
+                var htmlOutput = new HtmlOutput(callGraph, htmlOutputDir, solutionName);
+                await htmlOutput.GenerateAsync(compilations);
+
+                Console.Error.WriteLine($"\n✓ HTML documentation generated successfully!");
+                Console.Error.WriteLine($"  Location: {Path.GetFullPath(htmlOutputDir)}");
+                Console.Error.WriteLine($"  Open: {Path.GetFullPath(Path.Combine(htmlOutputDir, "index.html"))}");
             }
             else
             {
