@@ -847,17 +847,17 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         if (matches.length > 0) {
-            let html = '<div class=\"search-results-list\">';
+            let html = '<div class=""search-results-list"">';
             matches.slice(0, 10).forEach(match => {
-                html += `<div class=\"search-result\"><a href=\"${match.href}\">${match.text}</a></div>`;
+                html += '<div class=""search-result""><a href=""' + match.href + '"">' + match.text + '</a></div>';
             });
             if (matches.length > 10) {
-                html += `<div class=\"search-more\">${matches.length - 10} more results...</div>`;
+                html += '<div class=""search-more"">' + (matches.length - 10) + ' more results...</div>';
             }
             html += '</div>';
             searchResults.innerHTML = html;
         } else {
-            searchResults.innerHTML = '<div class=\"no-results\">No results found</div>';
+            searchResults.innerHTML = '<div class=""no-results"">No results found</div>';
         }
     });
 });

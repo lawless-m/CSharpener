@@ -88,7 +88,7 @@ public class DocumentCommand
 
             // Load solution
             var solutionLoader = new SolutionLoader(options);
-            var solution = await solutionLoader.LoadSolutionAsync(solutionPath);
+            var solution = await solutionLoader.LoadAsync();
             if (solution == null)
             {
                 Console.Error.WriteLine("Failed to load solution");
@@ -100,20 +100,18 @@ public class DocumentCommand
             var cachedResult = await cache.TryLoadCacheAsync(solution);
 
             CallGraph callGraph;
-            List<Compilation> compilations;
 
             if (cachedResult != null)
             {
                 Console.Error.WriteLine("Using cached analysis");
                 callGraph = cachedResult.CallGraph;
-                compilations = cachedResult.Compilations;
             }
             else
             {
                 Console.Error.WriteLine("Performing fresh analysis...");
 
                 // Get compilations
-                compilations = new List<Compilation>();
+                var compilations = new List<Compilation>();
                 foreach (var project in solution.Projects)
                 {
                     var compilation = await project.GetCompilationAsync();
@@ -128,7 +126,7 @@ public class DocumentCommand
                 var allMethods = await methodDiscovery.DiscoverMethodsAsync(compilations);
 
                 // Build call graph
-                var graphBuilder = new CallGraphBuilder(options);
+                var graphBuilder = new CallGraphBuilder();
                 callGraph = await graphBuilder.BuildCallGraphAsync(allMethods, compilations);
 
                 // Detect entry points
@@ -141,8 +139,14 @@ public class DocumentCommand
                     callGraph.MarkAsUsed(method.Id);
                 }
 
+                // Get entry points for cache
+                var entryPoints = callGraph.Methods.Values
+                    .Where(m => m.IsEntryPoint)
+                    .Select(m => m.Id)
+                    .ToList();
+
                 // Save cache for future use
-                await cache.SaveCacheAsync(solution, callGraph, compilations);
+                await cache.SaveCacheAsync(solution, callGraph, entryPoints);
             }
 
             // Filter methods

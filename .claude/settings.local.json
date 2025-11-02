@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/matthew.heath/.claude/skills/Dotnet 8 to 9/**)",
+      "Bash(dotnet build:*)",
+      "Bash(dir:*)",
+      "Bash(findstr:*)",
+      "Bash(dotnet test:*)",
+      "Read(//c/Users/matthew.heath/.claude/skills/**)",
+      "Bash(dotnet run:*)",
+      "Bash(git add:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

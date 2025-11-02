@@ -2,6 +2,7 @@ using System.CommandLine;
 using System.CommandLine.Invocation;
 using CSharpCallGraphAnalyzer.Analysis;
 using CSharpCallGraphAnalyzer.Configuration;
+using CSharpCallGraphAnalyzer.Models;
 using CSharpCallGraphAnalyzer.Output;
 
 namespace CSharpCallGraphAnalyzer.Commands;
