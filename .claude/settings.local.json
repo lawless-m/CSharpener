@@ -8,7 +8,12 @@
       "Bash(dotnet test:*)",
       "Read(//c/Users/matthew.heath/.claude/skills/**)",
       "Bash(dotnet run:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nUpgrade project to .NET 9 and fix compatibility issues\n\nThis commit upgrades the CSharpener project from .NET 8 to .NET 9 and resolves\ncompatibility issues encountered during the migration.\n\nChanges:\n- Upgraded all project files to target net9.0\n- Updated NuGet packages to .NET 9 compatible versions:\n  * Microsoft.CodeAnalysis.CSharp.Workspaces: 4.8.0 → 4.12.0\n  * Microsoft.CodeAnalysis.Workspaces.MSBuild: Added at 4.12.0\n  * Microsoft.Build.Locator: 1.6.10 → 1.7.8\n  * System.Text.Json: 8.0.0 → 9.0.0\n  * Test packages updated to latest versions\n\nCode fixes for .NET 9 compatibility:\n- Fixed JavaScript template literals in HtmlOutput.cs (CS1002, CS1056, CS1010)\n  * Replaced backtick template literals with string concatenation\n  * .NET 9 has stricter verbatim string literal parsing\n- Added missing using statements (Models namespace)\n- Fixed method calls (LoadAsync vs LoadSolutionAsync)\n- Fixed CallGraphBuilder constructor call\n- Fixed cache parameter types (List<string> vs List<Compilation>)\n- Excluded TestData files from test project compilation\n- Disabled ImplicitUsings in SimpleConsoleApp to avoid entry point conflicts\n\nDocumentation:\n- Added self-analysis HTML documentation (338KB)\n- All tests pass (4/4 successful)\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git push)",
+      "Bash(dotnet:*)",
+      "Bash(find:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []
