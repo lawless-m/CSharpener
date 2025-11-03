@@ -116,7 +116,7 @@ public class CallGraphCache
     /// <summary>
     /// Generate cache key based on solution path and file modification times
     /// </summary>
-    private async Task<string> GenerateCacheKeyAsync(Solution solution)
+    private Task<string> GenerateCacheKeyAsync(Solution solution)
     {
         var keyBuilder = new StringBuilder();
         keyBuilder.Append(_options.SolutionPath);
@@ -152,7 +152,8 @@ public class CallGraphCache
         // Hash the key for reasonable filename length
         using var sha256 = SHA256.Create();
         var hashBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(keyBuilder.ToString()));
-        return Convert.ToBase64String(hashBytes).Replace("/", "_").Replace("+", "-").Replace("=", "");
+        var cacheKey = Convert.ToBase64String(hashBytes).Replace("/", "_").Replace("+", "-").Replace("=", "");
+        return Task.FromResult(cacheKey);
     }
 
     /// <summary>
