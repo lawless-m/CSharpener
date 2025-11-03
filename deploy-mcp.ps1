@@ -1,8 +1,8 @@
 # Deploy CSharpener MCP Server
-# This script publishes the MCP server as a self-contained executable
+# This script publishes the MCP server as a self-contained executable to Y:\CSharpDLLs\CSharpener\
 
 param(
-    [string]$OutputPath = "$PSScriptRoot\published\mcp-server",
+    [string]$OutputPath = "Y:\CSharpDLLs\CSharpener",
     [string]$Runtime = "win-x64"  # Options: win-x64, linux-x64, osx-x64, osx-arm64
 )
 
@@ -13,50 +13,67 @@ Write-Host "Output: $OutputPath" -ForegroundColor Cyan
 # Create output directory
 New-Item -ItemType Directory -Force -Path $OutputPath | Out-Null
 
+# Use temporary directory for build
+$tempPath = "$PSScriptRoot\published\temp"
+New-Item -ItemType Directory -Force -Path $tempPath | Out-Null
+
 # Publish the project
 dotnet publish "$PSScriptRoot\CSharpCallGraphAnalyzer.McpServer\CSharpCallGraphAnalyzer.McpServer.csproj" `
     --configuration Release `
     --runtime $Runtime `
     --self-contained true `
-    --output $OutputPath `
+    --output $tempPath `
     /p:PublishSingleFile=true `
     /p:PublishTrimmed=false `
     /p:IncludeNativeLibrariesForSelfExtract=true
 
 if ($LASTEXITCODE -eq 0) {
     Write-Host "`nPublish successful!" -ForegroundColor Green
-    Write-Host "`nExecutable location:" -ForegroundColor Yellow
 
+    # Copy and rename to final location
     if ($Runtime.StartsWith("win")) {
-        $exePath = Join-Path $OutputPath "CSharpCallGraphAnalyzer.McpServer.exe"
-        Write-Host $exePath -ForegroundColor White
+        $sourceExe = Join-Path $tempPath "CSharpCallGraphAnalyzer.McpServer.exe"
+        $finalExe = Join-Path $OutputPath "CSharpener.exe"
+
+        Copy-Item $sourceExe $finalExe -Force
+        Write-Host "`nCopied to: $finalExe" -ForegroundColor Green
+
+        # Clean up temp
+        Remove-Item $tempPath -Recurse -Force
+
+        Write-Host "`nExecutable location:" -ForegroundColor Yellow
+        Write-Host $finalExe -ForegroundColor White
 
         Write-Host "`nAdd this to your Claude Desktop config:" -ForegroundColor Yellow
         Write-Host @"
 {
   "mcpServers": {
     "csharpener": {
-      "command": "$($exePath -replace '\\', '\\')"
+      "command": "$($finalExe -replace '\\', '\\')"
     }
   }
 }
 "@ -ForegroundColor White
     } else {
-        $exePath = Join-Path $OutputPath "CSharpCallGraphAnalyzer.McpServer"
-        Write-Host $exePath -ForegroundColor White
+        $sourceExe = Join-Path $tempPath "CSharpCallGraphAnalyzer.McpServer"
+        $finalExe = Join-Path $OutputPath "CSharpener"
 
-        # Make executable on Unix
-        if ($Runtime.StartsWith("linux") -or $Runtime.StartsWith("osx")) {
-            Write-Host "`nMaking executable..." -ForegroundColor Yellow
-            chmod +x $exePath
-        }
+        Copy-Item $sourceExe $finalExe -Force
+        chmod +x $finalExe
+
+        # Clean up temp
+        Remove-Item $tempPath -Recurse -Force
+
+        Write-Host "`nCopied to: $finalExe" -ForegroundColor Green
+        Write-Host "`nExecutable location:" -ForegroundColor Yellow
+        Write-Host $finalExe -ForegroundColor White
 
         Write-Host "`nAdd this to your Claude Desktop config:" -ForegroundColor Yellow
         Write-Host @"
 {
   "mcpServers": {
     "csharpener": {
-      "command": "$exePath"
+      "command": "$finalExe"
     }
   }
 }

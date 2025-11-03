@@ -8,10 +8,21 @@ CSharpener now includes an **MCP (Model Context Protocol) server** that lets you
 
 **Quick Start:**
 ```powershell
-.\deploy-mcp.ps1  # Deploy the MCP server
+.\deploy-mcp.ps1  # Deploys to Y:\CSharpDLLs\CSharpener\CSharpener.exe
 ```
 
-Then add to Claude Desktop config and restart. See [DEPLOYMENT.md](DEPLOYMENT.md) for details.
+Then add this to your Claude Desktop config (`%APPDATA%\Claude\claude_desktop_config.json`):
+```json
+{
+  "mcpServers": {
+    "csharpener": {
+      "command": "Y:\\CSharpDLLs\\CSharpener\\CSharpener.exe"
+    }
+  }
+}
+```
+
+Restart Claude Desktop and you're ready! See [DEPLOYMENT.md](DEPLOYMENT.md) for details.
 
 **Example queries in Claude:**
 - "Find unused methods in my solution"

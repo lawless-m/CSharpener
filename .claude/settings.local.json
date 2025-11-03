@@ -14,7 +14,9 @@
       "Bash(dotnet:*)",
       "Bash(find:*)",
       "Bash(git commit:*)",
-      "Bash(powershell -ExecutionPolicy Bypass -File:*)"
+      "Bash(powershell -ExecutionPolicy Bypass -File:*)",
+      "Read(//y/CSharpDLLs/CSharpener/**)",
+      "Bash(\"Y:\\CSharpDLLs\\CSharpener\\CSharpener.exe\")"
     ],
     "deny": [],
     "ask": []

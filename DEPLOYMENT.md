@@ -6,14 +6,20 @@ This guide explains how to deploy the CSharpener MCP server to use with Claude D
 
 ### Windows
 
-1. Run the deployment script:
+1. Run the deployment script (deploys to `Y:\CSharpDLLs\CSharpener\CSharpener.exe`):
 ```powershell
 .\deploy-mcp.ps1
 ```
 
-2. Copy the configuration output and add it to:
-```
-%APPDATA%\Claude\claude_desktop_config.json
+2. Add to `%APPDATA%\Claude\claude_desktop_config.json`:
+```json
+{
+  "mcpServers": {
+    "csharpener": {
+      "command": "Y:\\CSharpDLLs\\CSharpener\\CSharpener.exe"
+    }
+  }
+}
 ```
 
 3. Restart Claude Desktop
