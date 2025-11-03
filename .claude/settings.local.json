@@ -16,7 +16,9 @@
       "Bash(git commit:*)",
       "Bash(powershell -ExecutionPolicy Bypass -File:*)",
       "Read(//y/CSharpDLLs/CSharpener/**)",
-      "Bash(\"Y:\\CSharpDLLs\\CSharpener\\CSharpener.exe\")"
+      "Bash(\"Y:\\CSharpDLLs\\CSharpener\\CSharpener.exe\")",
+      "Bash(ls:*)",
+      "Read(//c/Users/matthew.heath/.claude/**)"
     ],
     "deny": [],
     "ask": []

@@ -2,34 +2,42 @@
 
 A Roslyn-based static analysis tool that analyzes C# codebases to build call graphs, identify unused code, and help with code cleanup and refactoring decisions.
 
-## 🚀 New: MCP Server Support!
+## 🚀 Quick Start
 
-CSharpener now includes an **MCP (Model Context Protocol) server** that lets you analyze C# code directly from Claude Desktop using natural language!
-
-**Quick Start:**
+**Deploy the tool:**
 ```powershell
 .\deploy-mcp.ps1  # Deploys to Y:\CSharpDLLs\CSharpener\CSharpener.exe
 ```
 
-Then add this to your Claude Desktop config (`%APPDATA%\Claude\claude_desktop_config.json`):
-```json
-{
-  "mcpServers": {
-    "csharpener": {
-      "command": "Y:\\CSharpDLLs\\CSharpener\\CSharpener.exe"
-    }
-  }
-}
+**Use from Claude Code (or any CLI):**
+```bash
+# Find unused methods
+Y:\CSharpDLLs\CSharpener\CSharpener.exe unused --solution MySolution.sln --format console
+
+# Find who calls a method
+Y:\CSharpDLLs\CSharpener\CSharpener.exe callers --solution MySolution.sln --method BuildAsync
+
+# Analyze impact of removing a method
+Y:\CSharpDLLs\CSharpener\CSharpener.exe impact --solution MySolution.sln --method MyMethod
+
+# Generate HTML documentation
+Y:\CSharpDLLs\CSharpener\CSharpener.exe document --solution MySolution.sln --output docs/analysis.html
 ```
 
-Restart Claude Desktop and you're ready! See [DEPLOYMENT.md](DEPLOYMENT.md) for details.
+**Use with Claude Code:**
+Just ask Claude to run analysis commands! For example:
+- "Analyze my solution at C:\MyProject\MySolution.sln for unused methods"
+- "Find who calls the BuildAsync method in my solution"
+- "Generate an HTML documentation page for my solution"
 
-**Example queries in Claude:**
-- "Find unused methods in my solution"
-- "Who calls the BuildAsync method?"
-- "What would break if I deleted this method?"
+## 🔌 Bonus: MCP Server for Claude Desktop
 
-Learn more: [MCP Server README](CSharpCallGraphAnalyzer.McpServer/README.md)
+CSharpener can also run as an **MCP (Model Context Protocol) server** for Claude Desktop (the standalone app):
+- Natural language queries without command-line syntax
+- See [DEPLOYMENT.md](DEPLOYMENT.md) for Claude Desktop setup
+- See [MCP-vs-CLI.md](MCP-vs-CLI.md) for detailed comparison
+
+**Note:** The MCP server requires Claude Desktop (not Claude Code). The CLI tool works everywhere, including with Claude Code!
 
 ## Features
 
