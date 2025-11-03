@@ -6,7 +6,7 @@ A Roslyn-based static analysis tool that analyzes C# codebases to build call gra
 
 **Deploy the tool:**
 ```powershell
-.\deploy-mcp.ps1  # Deploys to Y:\CSharpDLLs\CSharpener\CSharpener.exe
+.\deploy.ps1  # Deploys to Y:\CSharpDLLs\CSharpener\CSharpener.exe
 ```
 
 **Use from Claude Code (or any CLI):**
@@ -30,14 +30,7 @@ Just ask Claude to run analysis commands! For example:
 - "Find who calls the BuildAsync method in my solution"
 - "Generate an HTML documentation page for my solution"
 
-## 🔌 Bonus: MCP Server for Claude Desktop
-
-CSharpener can also run as an **MCP (Model Context Protocol) server** for Claude Desktop (the standalone app):
-- Natural language queries without command-line syntax
-- See [DEPLOYMENT.md](DEPLOYMENT.md) for Claude Desktop setup
-- See [MCP-vs-CLI.md](MCP-vs-CLI.md) for detailed comparison
-
-**Note:** The MCP server requires Claude Desktop (not Claude Code). The CLI tool works everywhere, including with Claude Code!
+A **Claude Code skill** is included at `C:\Users\matthew.heath\.claude\skills\CSharpener\SKILL.md` for easy reference.
 
 ## Features
 

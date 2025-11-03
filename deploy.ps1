@@ -1,12 +1,13 @@
-# Deploy CSharpener MCP Server
-# This script publishes the MCP server as a self-contained executable to Y:\CSharpDLLs\CSharpener\
+# Deploy CSharpener
+# Publishes CSharpener as a self-contained executable to Y:\CSharpDLLs\CSharpener\
+# Works as both a CLI tool and MCP server
 
 param(
     [string]$OutputPath = "Y:\CSharpDLLs\CSharpener",
     [string]$Runtime = "win-x64"  # Options: win-x64, linux-x64, osx-x64, osx-arm64
 )
 
-Write-Host "Publishing CSharpener MCP Server..." -ForegroundColor Green
+Write-Host "Publishing CSharpener..." -ForegroundColor Green
 Write-Host "Runtime: $Runtime" -ForegroundColor Cyan
 Write-Host "Output: $OutputPath" -ForegroundColor Cyan
 
