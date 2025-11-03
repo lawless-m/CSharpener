@@ -45,6 +45,9 @@ bld/
 .csharp-analyzer-cache/
 **/TestResults/
 
+# Published MCP server
+published/
+
 # OS files
 .DS_Store
 Thumbs.db

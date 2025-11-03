@@ -1,6 +1,24 @@
-# C# Call Graph Analyzer
+# CSharpener - C# Call Graph Analyzer
 
 A Roslyn-based static analysis tool that analyzes C# codebases to build call graphs, identify unused code, and help with code cleanup and refactoring decisions.
+
+## 🚀 New: MCP Server Support!
+
+CSharpener now includes an **MCP (Model Context Protocol) server** that lets you analyze C# code directly from Claude Desktop using natural language!
+
+**Quick Start:**
+```powershell
+.\deploy-mcp.ps1  # Deploy the MCP server
+```
+
+Then add to Claude Desktop config and restart. See [DEPLOYMENT.md](DEPLOYMENT.md) for details.
+
+**Example queries in Claude:**
+- "Find unused methods in my solution"
+- "Who calls the BuildAsync method?"
+- "What would break if I deleted this method?"
+
+Learn more: [MCP Server README](CSharpCallGraphAnalyzer.McpServer/README.md)
 
 ## Features
 
